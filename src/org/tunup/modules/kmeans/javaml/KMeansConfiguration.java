@@ -3,12 +3,12 @@ package org.tunup.modules.kmeans.javaml;
 import java.util.Arrays;
 import java.util.List;
 
-public class KMeansParameters {
+public class KMeansConfiguration {
 	int k;
 	int distanceMeasureId;
 	int iterations;
 
-	public KMeansParameters(int k, int distanceMeasureId, int iterations) {
+	public KMeansConfiguration(int k, int distanceMeasureId, int iterations) {
 		this.k = k;
 		this.distanceMeasureId = distanceMeasureId;
 		this.iterations = iterations;
@@ -16,8 +16,8 @@ public class KMeansParameters {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof KMeansParameters) {
-			KMeansParameters obj2 = (KMeansParameters) obj;
+		if (obj instanceof KMeansConfiguration) {
+			KMeansConfiguration obj2 = (KMeansConfiguration) obj;
 			boolean equals = k == obj2.k && distanceMeasureId == obj2.distanceMeasureId
 			    && iterations == obj2.iterations;
 			return equals;

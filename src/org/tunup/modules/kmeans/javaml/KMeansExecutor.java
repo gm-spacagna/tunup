@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tunup.modules.kmeans.watchmaker.KMeansConfigResult;
+
 import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.KMeans;
 import net.sf.javaml.clustering.evaluation.AICScore;
@@ -43,16 +45,18 @@ public class KMeansExecutor {
 	    new CosineDistance(), // 2
 	    new CosineSimilarity(), // 3
 	    new EuclideanDistance(), // 4
-	    new JaccardIndexDistance(), // 5
-	    new JaccardIndexSimilarity(), // 6
+	    //new JaccardIndexDistance(), // 5
+	    //new JaccardIndexSimilarity(), // 6
 	    new ManhattanDistance(), // 7
 	    new MinkowskiDistance(), // 8
 	    new PearsonCorrelationCoefficient(), // 9
 	    new RBFKernel(), // 10
 	    //new SpearmanFootruleDistance(), // 11
-	    new SpearmanRankCorrelation() // 12
+	    //new SpearmanRankCorrelation() // 12
 	};
 
+	private int count = 0;
+	
 	private final String filePath;
 
 	private double fitnessValue = 0;
@@ -63,23 +67,23 @@ public class KMeansExecutor {
 
 	private Dataset[] clusters;
 
-	private Map<KMeansParameters, Double> cache = new HashMap<KMeansParameters, Double>();
+	private Map<KMeansConfiguration, Double> cache = new HashMap<KMeansConfiguration, Double>();
 
 	public static KMeansExecutor getInstance(String name) {
 		return INSTANCES.get(name);
 	}
 
 	public static KMeansExecutor createInstance(String name, String filePath) {
-		if (INSTANCES.containsKey(name)) {
-			throw new RuntimeException("Instance already existent");
+		if (!INSTANCES.containsKey(name)) {
+			KMeansExecutor instance = new KMeansExecutor(filePath);
+			INSTANCES.put(name, instance);
 		}
-		KMeansExecutor instance = new KMeansExecutor(filePath);
-		INSTANCES.put(name, instance);
-		return instance;
-	}
-	
+		return INSTANCES.get(name);
+		}
+
 	/**
 	 * Returns the number of DistanceMeasure Metrics available.
+	 * 
 	 * @return
 	 */
 	public static int getDistMeasures() {
@@ -99,7 +103,7 @@ public class KMeansExecutor {
 	 * @throws IOException
 	 */
 	public double executeAndEvaluate(int k, int distMeasureId) throws IOException {
-		return executeAndEvaluate(k, distMeasureId, 100);
+		return executeAndEvaluate(k, distMeasureId, 100, false);
 	}
 
 	/**
@@ -107,19 +111,19 @@ public class KMeansExecutor {
 	 * 
 	 * @param k
 	 * @param distMeasureId
-	 * @return The fitness value computed in a non natural way.
+	 * @param iterations
+	 * @param print
+	 * @return
 	 * @throws IOException
-	 *           In case is not possible to read from the file.
 	 */
-	public double executeAndEvaluate(int k, int distMeasureId, int iterations) 
-			throws IOException {
+	public double executeAndEvaluate(int k, int distMeasureId, int iterations, boolean print)
+	    throws IOException {
+
 		DistanceMeasure distMeasure = DIST_MEASURES[distMeasureId];
-		KMeansParameters config = new KMeansParameters(k, distMeasureId, iterations);
+		KMeansConfiguration config = new KMeansConfiguration(k, distMeasureId, iterations);
 		/* Check in the cache */
-
+		boolean cached = false;
 		if (!cache.containsKey(config)) {
-			System.out.println("New entry: " + k + " " + distMeasureId);
-
 			// execute:
 
 			/* Load a dataset */
@@ -151,19 +155,35 @@ public class KMeansExecutor {
 				/* Measure the quality of the clustering */
 				// sseScore = sse.score(clusters);
 				// scsScore = scs.score(clusters);
-				aicScore = aic.score(clusters);
-				// bicScore = bic.score(clusters);
-
+				try {
+					aicScore = aic.score(clusters);
+					// bicScore = bic.score(clusters);
+				} catch (IndexOutOfBoundsException e) {
+					System.out.println("IndexOutOfBoundsException on: "
+							+ "Cached:" + cached + " k: " + k + " DistMeasure: "
+					    + distMeasure.getClass().getSimpleName()
+					    + "(" + distMeasureId + ")" + " Iterations " + iterations + " FitnessValue: "
+					    + fitnessValue);
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+				}
 				fitnessValue = aicScore;
 				cache.put(config, fitnessValue);
-				return fitnessValue;
 			} else {
-				return 0;
+				fitnessValue = 0;
 			}
+			count++;
 		} else {
-			System.out.println("Cached: " + k + " " + distMeasureId);
-			return cache.get(config);
+			cached = true;
+			fitnessValue = cache.get(config);
 		}
+		if (print) {
+			System.out.println("Cached:" + cached + " k: " + k + " DistMeasure: "
+			    + distMeasure.getClass().getSimpleName()
+			    + "(" + distMeasureId + ")" + " Iterations " + iterations + " FitnessValue: "
+			    + fitnessValue);
+		}
+		return fitnessValue;
 	}
 
 	public double getFitnessValue() {
@@ -180,5 +200,16 @@ public class KMeansExecutor {
 
 	public Dataset[] getClusters() {
 		return clusters;
+	}
+
+	public KMeansConfigResult getConfigResult(KMeansConfiguration config) {
+		if (cache.containsKey(config)) {
+			return new KMeansConfigResult(config, cache.get(config));
+		}
+		throw new RuntimeException("Configuration result not available");
+	}
+
+	public int getCount() {
+		return count;
 	}
 }

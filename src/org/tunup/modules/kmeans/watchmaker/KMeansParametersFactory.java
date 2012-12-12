@@ -2,7 +2,7 @@ package org.tunup.modules.kmeans.watchmaker;
 
 import java.util.Random;
 
-import org.tunup.modules.kmeans.javaml.KMeansParameters;
+import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
 import org.uncommons.watchmaker.framework.factories.AbstractCandidateFactory;
 
 /**
@@ -10,7 +10,7 @@ import org.uncommons.watchmaker.framework.factories.AbstractCandidateFactory;
  * 
  * @author Gianmario Spacagna (gmspacagna@gmail.com)
  */
-public class KMeansParametersFactory extends AbstractCandidateFactory<KMeansParameters>{
+public class KMeansParametersFactory extends AbstractCandidateFactory<KMeansConfiguration>{
 
 	int maxK;
 	int distMeasures;
@@ -27,10 +27,10 @@ public class KMeansParametersFactory extends AbstractCandidateFactory<KMeansPara
   }
 
 	@Override
-  public KMeansParameters generateRandomCandidate(Random rng) {
+  public KMeansConfiguration generateRandomCandidate(Random rng) {
 	  int k = rng.nextInt(maxK) + 1;
 	  int distMeasureId = rng.nextInt(distMeasures);
 	  int iterations = rng.nextInt(maxIterations - minIterations + 1) + minIterations;
-	  return new KMeansParameters(k, distMeasureId, iterations);
+	  return new KMeansConfiguration(k, distMeasureId, iterations);
 	}
 }

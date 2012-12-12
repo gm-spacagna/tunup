@@ -6,7 +6,7 @@ import java.util.Random;
 
 import net.sf.javaml.clustering.KMeans;
 
-import org.tunup.modules.kmeans.javaml.KMeansParameters;
+import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
 import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
@@ -16,7 +16,7 @@ import org.uncommons.watchmaker.framework.EvolutionaryOperator;
  * 
  * @author Gianmario Spacagna (gmspacagna@gmail.com)
  */
-public class KMeansMutation implements EvolutionaryOperator<KMeansParameters> {
+public class KMeansMutation implements EvolutionaryOperator<KMeansConfiguration> {
 
 	private final NumberGenerator<Probability> mutationProbability;
 	private final int maxK;
@@ -40,15 +40,15 @@ public class KMeansMutation implements EvolutionaryOperator<KMeansParameters> {
 	}
 
 	@Override
-	public List<KMeansParameters> apply(List<KMeansParameters> selectedCandidates, Random rng) {
-		List<KMeansParameters> result = new ArrayList<>(selectedCandidates.size());
-		for (KMeansParameters candidate : selectedCandidates) {
+	public List<KMeansConfiguration> apply(List<KMeansConfiguration> selectedCandidates, Random rng) {
+		List<KMeansConfiguration> result = new ArrayList<>(selectedCandidates.size());
+		for (KMeansConfiguration candidate : selectedCandidates) {
 			result.add(mutate(candidate, rng));
 		}
 		return result;
 	}
 
-	private KMeansParameters mutate(KMeansParameters config, Random rng) {
+	private KMeansConfiguration mutate(KMeansConfiguration config, Random rng) {
 		// mutate K:
 		int k = config.getK();
 		if (mutationProbability.nextValue().nextEvent(rng)) {
@@ -61,9 +61,9 @@ public class KMeansMutation implements EvolutionaryOperator<KMeansParameters> {
 		}
 		// mutate n iterations:
 		int iterations = config.getIterations();
-		if (mutationProbability.nextValue().nextEvent(rng)) {
-			iterations = rng.nextInt(maxIterations) + 1;
-		}
-		return new KMeansParameters(k, distMeasureId, iterations);
+//		if (mutationProbability.nextValue().nextEvent(rng)) {
+//			iterations = rng.nextInt(maxIterations) + 1;
+//		}
+		return new KMeansConfiguration(k, distMeasureId, iterations);
 	}
 }
