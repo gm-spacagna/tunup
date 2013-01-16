@@ -5,7 +5,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tunup.modules.kmeans.javaml.evaluation.KMeansAicScore;
 import org.tunup.modules.kmeans.watchmaker.KMeansConfigResult;
+
+import com.google.common.base.Preconditions;
+import com.rapidminer.operator.ports.metadata.Precondition;
 
 import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.KMeans;
@@ -40,30 +44,49 @@ public class KMeansExecutor {
 
 	private static final Map<String, KMeansExecutor> INSTANCES = new HashMap<String, KMeansExecutor>();
 
-	private static final DistanceMeasure[] DIST_MEASURES = { new AngularDistance(), // 0
+	private final String separator;
+	private final int class_index;
+
+	// //new AngularDistance(), // 0
+	// new ChebychevDistance(), // 1
+	// new CosineDistance(), // 2
+	// new CosineSimilarity(), // 3
+	// new EuclideanDistance(), // 4
+	// // new JaccardIndexDistance(), // 5
+	// // new JaccardIndexSimilarity(), // 6
+	// new ManhattanDistance(), // 7
+	// new MinkowskiDistance(), // 8
+	// // new PearsonCorrelationCoefficient(), // 9
+	// new RBFKernel(), // 10
+	// // new SpearmanFootruleDistance(), // 11
+	// // new SpearmanRankCorrelation() // 12
+
+	private static final DistanceMeasure[] DIST_MEASURES = {
+	    new AngularDistance(), // 0
 	    new ChebychevDistance(), // 1
 	    new CosineDistance(), // 2
 	    new CosineSimilarity(), // 3
 	    new EuclideanDistance(), // 4
-	    //new JaccardIndexDistance(), // 5
-	    //new JaccardIndexSimilarity(), // 6
+	    // new JaccardIndexDistance(), // 5
+	    // new JaccardIndexSimilarity(), // 6
 	    new ManhattanDistance(), // 7
 	    new MinkowskiDistance(), // 8
 	    new PearsonCorrelationCoefficient(), // 9
-	    new RBFKernel(), // 10
-	    //new SpearmanFootruleDistance(), // 11
-	    //new SpearmanRankCorrelation() // 12
+	    // new RBFKernel(), // 10
+	    // new SpearmanFootruleDistance(), // 11
+	    new SpearmanRankCorrelation() // 12
 	};
 
 	private int count = 0;
-	
+
 	private final String filePath;
 
 	private double fitnessValue = 0;
 	private double sseScore = 0;
 	private double scsScore = 0;
-	private double aicScore = 0;
-	private double bicScore = 0;
+	private double score = 0;
+
+	private final ClusterEvaluationWithNaturalFitness ce;
 
 	private Dataset[] clusters;
 
@@ -73,13 +96,14 @@ public class KMeansExecutor {
 		return INSTANCES.get(name);
 	}
 
-	public static KMeansExecutor createInstance(String name, String filePath) {
+	public static KMeansExecutor createInstance(String name, String filePath, String separator,
+	    int dim, ClusterEvaluationWithNaturalFitness ce) {
 		if (!INSTANCES.containsKey(name)) {
-			KMeansExecutor instance = new KMeansExecutor(filePath);
+			KMeansExecutor instance = new KMeansExecutor(filePath, separator, dim, ce);
 			INSTANCES.put(name, instance);
 		}
 		return INSTANCES.get(name);
-		}
+	}
 
 	/**
 	 * Returns the number of DistanceMeasure Metrics available.
@@ -90,100 +114,80 @@ public class KMeansExecutor {
 		return DIST_MEASURES.length;
 	}
 
-	public KMeansExecutor(String filePath) {
+	public KMeansExecutor(String filePath, String separator, int classIndex) {
+		this(filePath, separator, classIndex, new KMeansAicScore());
+	}
+
+	public KMeansExecutor(String filePath, String separator, int classIndex,
+	    ClusterEvaluationWithNaturalFitness ce) {
 		this.filePath = filePath;
+		this.separator = separator;
+		this.class_index = classIndex;
+		this.ce = Preconditions.checkNotNull(ce);
 	}
 
-	/**
-	 * Execute and evaluate KMeans using iterations = 100.
-	 * 
-	 * @param k
-	 * @param distMeasureId
-	 * @return
-	 * @throws IOException
-	 */
-	public double executeAndEvaluate(int k, int distMeasureId) throws IOException {
-		return executeAndEvaluate(k, distMeasureId, 100, false);
-	}
-
-	/**
-	 * Execute JavaML KMeans and evaluate using AIC index.
-	 * 
-	 * @param k
-	 * @param distMeasureId
-	 * @param iterations
-	 * @param print
-	 * @return
-	 * @throws IOException
-	 */
-	public double executeAndEvaluate(int k, int distMeasureId, int iterations, boolean print)
-	    throws IOException {
-
-		DistanceMeasure distMeasure = DIST_MEASURES[distMeasureId];
+	public double executeAndEvaluate(int k, int distMeasureId, int iterations) throws IOException {
 		KMeansConfiguration config = new KMeansConfiguration(k, distMeasureId, iterations);
-		/* Check in the cache */
-		boolean cached = false;
-		if (!cache.containsKey(config)) {
-			// execute:
+		return executeAndEvaluate(config);
+	}
 
-			/* Load a dataset */
-			Dataset data = FileHandler.loadDataset(new File(filePath), 4, ",");
-
-			// data = FileHandler.loadDataset(new File("data/internet_ads/ad.data"),
-			// 4, ",");
-
-			if (k > 0) {
-				/*
-				 * Create a new instance of the KMeans algorithm, with no options
-				 * specified. By default this will generate 4 clusters.
-				 */
-				Clusterer km = new KMeans(k, iterations, distMeasure);
-				/*
-				 * Cluster the data, it will be returned as an array of data sets, with
-				 * each dataset representing a cluster.
-				 */
-				clusters = km.cluster(data);
-
-				// evaluate:
-
-				/* Create a measure for the cluster quality */
-				ClusterEvaluation sse = new SumOfSquaredErrors();
-				ClusterEvaluation scs = new SumOfCentroidSimilarities();
-				ClusterEvaluation aic = new AICScore();
-				ClusterEvaluation bic = new BICScore();
-
-				/* Measure the quality of the clustering */
-				// sseScore = sse.score(clusters);
-				// scsScore = scs.score(clusters);
-				try {
-					aicScore = aic.score(clusters);
-					// bicScore = bic.score(clusters);
-				} catch (IndexOutOfBoundsException e) {
-					System.out.println("IndexOutOfBoundsException on: "
-							+ "Cached:" + cached + " k: " + k + " DistMeasure: "
-					    + distMeasure.getClass().getSimpleName()
-					    + "(" + distMeasureId + ")" + " Iterations " + iterations + " FitnessValue: "
-					    + fitnessValue);
-					System.out.println(e.getMessage());
-					e.printStackTrace();
-				}
-				fitnessValue = aicScore;
-				cache.put(config, fitnessValue);
-			} else {
-				fitnessValue = 0;
-			}
-			count++;
+	/**
+	 * Execute and evaluate based on the cluster evaluation specified in the constructor.
+	 * All the evaluations are cached for a fast look-up.
+	 * 
+	 * @param config
+	 * @return
+	 * @throws IOException
+	 */
+	public double executeAndEvaluate(KMeansConfiguration config) throws IOException {
+		if (cache.containsKey(config)) {
+			return cache.get(config);
 		} else {
-			cached = true;
-			fitnessValue = cache.get(config);
+			double fitnessValue = evaluate(config, execute(config), ce);
+			cache.put(config, fitnessValue);
+			count++;
+			return fitnessValue;
 		}
-		if (print) {
-			System.out.println("Cached:" + cached + " k: " + k + " DistMeasure: "
-			    + distMeasure.getClass().getSimpleName()
-			    + "(" + distMeasureId + ")" + " Iterations " + iterations + " FitnessValue: "
-			    + fitnessValue);
+	}
+
+	public Dataset[] execute(KMeansConfiguration config)
+	    throws IOException {
+		Dataset data = FileHandler.loadDataset(new File(filePath), class_index, separator);
+		int k = config.getK();
+
+		if (k > 0) {
+			/*
+			 * Create a new instance of the KMeans algorithm, with no options
+			 * specified. By default this will generate 4 clusters.
+			 */
+			Clusterer km = new KMeans(k, config.getIterations(),
+			    DIST_MEASURES[config.getDistanceMeasureId()]);
+			/*
+			 * Cluster the data, it will be returned as an array of data sets, with
+			 * each dataset representing a cluster.
+			 */
+			clusters = km.cluster(data);
+			return clusters;
 		}
-		return fitnessValue;
+		else
+		{
+			throw new RuntimeException("k must be positive: " + k);
+		}
+	}
+
+	public double evaluate(KMeansConfiguration config, Dataset[] clusters, ClusterEvaluation ce) {
+		try {
+			score = ce.score(clusters);
+			fitnessValue = score;
+			cache.put(config, fitnessValue);
+			return fitnessValue;
+		} catch (IndexOutOfBoundsException e) {
+			System.out.println("IndexOutOfBoundsException on: "
+			    + config + " FitnessValue: " + fitnessValue);
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			return 0;
+		}
 	}
 
 	public double getFitnessValue() {
@@ -211,5 +215,17 @@ public class KMeansExecutor {
 
 	public int getCount() {
 		return count;
+	}
+
+	public void resetCount() {
+		count = 0;
+	}
+
+	public void clearCache() {
+		cache.clear();
+	}
+
+	public boolean getNaturalFitness() {
+		return ce.isNatural();
 	}
 }

@@ -7,9 +7,12 @@ import java.util.Random;
 import net.sf.javaml.clustering.KMeans;
 
 import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
+import org.tunup.modules.kmeans.space.KMeansParametersSpace;
 import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Mutation operator for {@link KMeans}.
@@ -19,24 +22,15 @@ import org.uncommons.watchmaker.framework.EvolutionaryOperator;
 public class KMeansMutation implements EvolutionaryOperator<KMeansConfiguration> {
 
 	private final NumberGenerator<Probability> mutationProbability;
-	private final int maxK;
-	private final int nMeasures;
-	private final int maxIterations;
 
-	/**
-	 * Creates a mutation operator for KMeans.
-	 * @param mutationProbability Probability of mutate each parameter.
-	 * @param maxK Max value of k.
-	 * @param nMeasures Number of distance measures available.
-	 * @param maxIterations Max number of iterations.
-	 */
-	public KMeansMutation(NumberGenerator<Probability> mutationProbability, int maxK, int nMeasures,
-	    int maxIterations) {
+	// full space of solutions
+	private final KMeansParametersSpace space;
+
+	public KMeansMutation(NumberGenerator<Probability> mutationProbability,
+	    KMeansParametersSpace space) {
 		super();
-		this.mutationProbability = mutationProbability;
-		this.maxK = maxK;
-		this.nMeasures = nMeasures;
-		this.maxIterations = maxIterations;
+		this.mutationProbability = Preconditions.checkNotNull(mutationProbability);
+		this.space = Preconditions.checkNotNull(space);
 	}
 
 	@Override
@@ -52,18 +46,18 @@ public class KMeansMutation implements EvolutionaryOperator<KMeansConfiguration>
 		// mutate K:
 		int k = config.getK();
 		if (mutationProbability.nextValue().nextEvent(rng)) {
-			k = rng.nextInt(maxK) + 1;
+			k = space.getK().pickRandomVal(rng);
 		}
 		// mutate distance measure:
 		int distMeasureId = config.getDistanceMeasureId();
 		if (mutationProbability.nextValue().nextEvent(rng)) {
-			distMeasureId = rng.nextInt(nMeasures);
+			distMeasureId = space.getDistMeasureId().pickRandomVal(rng);
 		}
 		// mutate n iterations:
 		int iterations = config.getIterations();
-//		if (mutationProbability.nextValue().nextEvent(rng)) {
-//			iterations = rng.nextInt(maxIterations) + 1;
-//		}
+		if (mutationProbability.nextValue().nextEvent(rng)) {
+			iterations = space.getIterations().pickRandomVal(rng);
+		}
 		return new KMeansConfiguration(k, distMeasureId, iterations);
 	}
 }

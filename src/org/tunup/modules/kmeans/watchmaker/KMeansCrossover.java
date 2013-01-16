@@ -7,10 +7,9 @@ import java.util.Random;
 import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.operators.AbstractCrossover;
-import org.uncommons.watchmaker.framework.operators.IntArrayCrossover;
 
 /**
- * Crossover operator for KMeans as an Array of Integers.
+ * Crossovering operator for KMeans.
  * 
  * @author Gianmario Spacagna (gmspacagna@gmail.com)
  */
@@ -30,11 +29,14 @@ public class KMeansCrossover extends AbstractCrossover<KMeansConfiguration> {
 				parameters[i][j] = parents[j].getParam(i);
 			}
 		}
+		// swap the second parameter always
+		swap(parameters[1][0], parameters[1][1]);
 		for (int i = 0 ; i < numberOfCrossoverPoints; i++) {
-			int index = rng.nextInt(4);
-			for (int j = index; j < 3; j++) {
-				// crossover all the parameters at the right of index (included)
-				swap(parameters[j][0], parameters[j][1]);
+			
+			for (int j = 0 ; j < 3; j++) {
+				if (rng.nextBoolean()) {
+					swap(parameters[2][0], parameters[2][1]);
+				}
 			}
 		}
 		KMeansConfiguration offspring1 = new KMeansConfiguration(parameters[0][0], 

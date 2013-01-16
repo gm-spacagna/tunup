@@ -15,25 +15,45 @@ import org.uncommons.watchmaker.framework.FitnessEvaluator;
 public class KMeansEvaluator implements FitnessEvaluator<KMeansConfiguration> {
 
 	KMeansExecutor executor;
-	
-	public KMeansEvaluator(KMeansExecutor executor) {
-	  super();
-	  this.executor = executor;
-  }
+	private final int n;
 
-	@Override
-  public double getFitness(KMeansConfiguration candidate, 
-  		List<? extends KMeansConfiguration> population) {
-		try {
-	    return executor.executeAndEvaluate(candidate.getK(), 
-	    		candidate.getDistanceMeasureId(), candidate.getIterations(), false);
-    } catch (IOException e) {
-	    throw new RuntimeException(e.getMessage());
-    }
+	/**
+	 * Creates an instance of the k-means evaluator with the specified executor and n = 10;
+	 * @param executor k-means executor.
+	 */
+	public KMeansEvaluator(KMeansExecutor executor) {
+		this(executor, 10);
+	}
+
+	/**
+	 * Creates an instance of the k-means evaluator.
+	 * @param executor k-means executor.
+	 * @param n Number of executions to average the fitness value evaluated.
+	 */
+	public KMeansEvaluator(KMeansExecutor executor, int n) {
+		super();
+		this.executor = executor;
+		this.n = n;
 	}
 
 	@Override
-  public boolean isNatural() {
-	  return false;
-  }
+	public double getFitness(KMeansConfiguration candidate,
+	    List<? extends KMeansConfiguration> population) {
+		try {
+			double fitnessVal = 0;
+			int i = 0;
+			while (i++ < n) {
+				fitnessVal += executor.executeAndEvaluate(candidate);
+			}
+			fitnessVal /= n;
+			return fitnessVal;
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+	@Override
+	public boolean isNatural() {
+		return executor.getNaturalFitness();
+	}
 }

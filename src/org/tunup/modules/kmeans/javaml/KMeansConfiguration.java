@@ -3,6 +3,11 @@ package org.tunup.modules.kmeans.javaml;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * An executable configuration of kmeans parameters.
+ * 
+ * @author Gianmario Spacagna (gmspacagna@gmail.com)
+ */
 public class KMeansConfiguration {
 	int k;
 	int distanceMeasureId;
