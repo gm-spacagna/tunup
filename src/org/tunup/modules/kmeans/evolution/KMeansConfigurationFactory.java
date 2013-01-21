@@ -25,6 +25,4 @@ public class KMeansConfigurationFactory extends AbstractCandidateFactory<KMeansC
   public KMeansConfiguration generateRandomCandidate(Random rng) {
 	  return space.pickRandomPoint(rng);
 	}
-	
-	
 }
