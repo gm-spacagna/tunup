@@ -1,4 +1,4 @@
-package org.tunup.modules.kmeans.javaml;
+package org.tunup.modules.kmeans.dataset;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,10 +1,10 @@
-package org.tunup.modules.kmeans.watchmaker;
+package org.tunup.modules.kmeans.evolution;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
-import org.tunup.modules.kmeans.javaml.KMeansExecutor;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
+import org.tunup.modules.kmeans.execution.KMeansExecutor;
 import org.uncommons.watchmaker.framework.FitnessEvaluator;
 
 /**

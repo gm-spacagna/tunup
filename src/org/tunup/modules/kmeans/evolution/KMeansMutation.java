@@ -1,4 +1,4 @@
-package org.tunup.modules.kmeans.watchmaker;
+package org.tunup.modules.kmeans.evolution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.Random;
 
 import net.sf.javaml.clustering.KMeans;
 
-import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.space.KMeansParametersSpace;
 import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;

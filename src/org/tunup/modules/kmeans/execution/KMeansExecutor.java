@@ -1,12 +1,14 @@
-package org.tunup.modules.kmeans.javaml;
+package org.tunup.modules.kmeans.execution;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tunup.modules.kmeans.javaml.evaluation.KMeansAicScore;
-import org.tunup.modules.kmeans.watchmaker.KMeansConfigResult;
+import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
+import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
+import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
 
 import com.google.common.base.Preconditions;
 import com.rapidminer.operator.ports.metadata.Precondition;

@@ -4,17 +4,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import org.tunup.modules.kmeans.javaml.ClusterEvaluationWithNaturalFitness;
-import org.tunup.modules.kmeans.javaml.KMeansExecutor;
-import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
+import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
+import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
+import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
+import org.tunup.modules.kmeans.evolution.KMeansConfigurationFactory;
+import org.tunup.modules.kmeans.evolution.KMeansCrossover;
+import org.tunup.modules.kmeans.evolution.KMeansEvaluator;
+import org.tunup.modules.kmeans.evolution.KMeansMutation;
+import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserver;
+import org.tunup.modules.kmeans.execution.KMeansExecutor;
 import org.tunup.modules.kmeans.space.KMeansParameterDimension;
-import org.tunup.modules.kmeans.tuning.configurations.KMeansExecutionConfiguration;
-import org.tunup.modules.kmeans.watchmaker.KMeansConfigResult;
-import org.tunup.modules.kmeans.watchmaker.KMeansConfigurationFactory;
-import org.tunup.modules.kmeans.watchmaker.KMeansCrossover;
-import org.tunup.modules.kmeans.watchmaker.KMeansEvaluator;
-import org.tunup.modules.kmeans.watchmaker.KMeansEvolutionObserver;
-import org.tunup.modules.kmeans.watchmaker.KMeansMutation;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.MersenneTwisterRNG;
 import org.uncommons.maths.random.Probability;
@@ -39,7 +39,7 @@ import org.uncommons.watchmaker.framework.termination.TargetFitness;
  */
 public final class KMeansTuningGA extends AbstractKMeansTuning {
 
-	KMeansTuningGA(KMeansExecutionConfiguration config, ClusterEvaluationWithNaturalFitness ce) {
+	KMeansTuningGA(KMeansDatasetConfiguration config, ClusterEvaluationWithNaturalFitness ce) {
 		super(config, ce);
 	}
 

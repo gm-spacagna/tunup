@@ -1,4 +1,4 @@
-package org.tunup.modules.kmeans.javaml;
+package org.tunup.modules.kmeans.configuration;
 
 import java.util.Arrays;
 import java.util.List;

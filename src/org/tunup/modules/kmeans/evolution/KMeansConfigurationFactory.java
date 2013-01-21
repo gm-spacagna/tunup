@@ -1,8 +1,8 @@
-package org.tunup.modules.kmeans.watchmaker;
+package org.tunup.modules.kmeans.evolution;
 
 import java.util.Random;
 
-import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.space.KMeansParametersSpace;
 import org.uncommons.watchmaker.framework.factories.AbstractCandidateFactory;
 

@@ -1,10 +1,10 @@
-package org.tunup.modules.kmeans.watchmaker;
+package org.tunup.modules.kmeans.evolution;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.tunup.modules.kmeans.javaml.KMeansConfiguration;
+import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.operators.AbstractCrossover;
 
