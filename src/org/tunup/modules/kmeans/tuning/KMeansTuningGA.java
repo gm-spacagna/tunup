@@ -13,24 +13,20 @@ import org.tunup.modules.kmeans.evolution.KMeansCrossover;
 import org.tunup.modules.kmeans.evolution.KMeansEvaluator;
 import org.tunup.modules.kmeans.evolution.KMeansMutation;
 import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserver;
-import org.tunup.modules.kmeans.execution.KMeansExecutor;
-import org.tunup.modules.kmeans.space.KMeansParameterDimension;
+import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionStatsWriter;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.MersenneTwisterRNG;
 import org.uncommons.maths.random.Probability;
+import org.uncommons.watchmaker.framework.CachingFitnessEvaluator;
 import org.uncommons.watchmaker.framework.CandidateFactory;
 import org.uncommons.watchmaker.framework.EvolutionEngine;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
 import org.uncommons.watchmaker.framework.FitnessEvaluator;
 import org.uncommons.watchmaker.framework.GenerationalEvolutionEngine;
 import org.uncommons.watchmaker.framework.SelectionStrategy;
-import org.uncommons.watchmaker.framework.islands.IslandEvolution;
-import org.uncommons.watchmaker.framework.islands.RingMigration;
 import org.uncommons.watchmaker.framework.operators.EvolutionPipeline;
 import org.uncommons.watchmaker.framework.selection.RouletteWheelSelection;
-import org.uncommons.watchmaker.framework.termination.GenerationCount;
 import org.uncommons.watchmaker.framework.termination.Stagnation;
-import org.uncommons.watchmaker.framework.termination.TargetFitness;
 
 /**
  * A potential tuning of KMeans using Genetic Algorithm.
@@ -44,7 +40,7 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 	}
 
 	// GA specific parameters:
-	private static final double PROB_MUTATION = 0.3;
+	private static final double PROB_MUTATION = 0.5;
 	private static final int CROSSOVER_POINTS = 1;
 	private static final double PROB_CROSSOVER = 0.9;
 	private static final int INIT_POP_SIZE = 6;
@@ -52,7 +48,7 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 	private static final int MAX_EVOLUTIONS = 100;
 	private static final int ELITISM = 1;
 	private static final double FV_TH = 9900.0;
-	private static final int N = 20;
+	private static final int N = 10;
 
 	@Override
 	public KMeansConfigResult getBestConfig() {
@@ -66,7 +62,9 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		    PROB_MUTATION)), space));
 		operators.add(new KMeansCrossover(CROSSOVER_POINTS, new Probability(PROB_CROSSOVER)));
 		EvolutionaryOperator<KMeansConfiguration> pipeline = new EvolutionPipeline<>(operators);
-		FitnessEvaluator<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N);
+		FitnessEvaluator<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N, false);
+		/* we add the cache */
+		evaluator = new CachingFitnessEvaluator<KMeansConfiguration>(evaluator);
 		SelectionStrategy<Object> selection = new RouletteWheelSelection();
 		Random rng = new MersenneTwisterRNG();
 
@@ -75,7 +73,7 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		EvolutionEngine<KMeansConfiguration> engine =
 		    new GenerationalEvolutionEngine<KMeansConfiguration>(factory, pipeline, evaluator,
 		        selection, rng);
-		engine.addEvolutionObserver(new KMeansEvolutionObserver());
+		engine.addEvolutionObserver(new KMeansEvolutionStatsWriter(executionConfig.getName()));
 		KMeansConfiguration bestConfig = engine.evolve(INIT_POP_SIZE, ELITISM,
 		    new Stagnation(STAGNATION_LIMIT, executor.getNaturalFitness()));
 		// KMeansConfiguration bestConfig = engine.evolve(INIT_POP_SIZE, ELITISM,

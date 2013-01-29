@@ -9,14 +9,18 @@ import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.KMeans;
 import net.sf.javaml.clustering.evaluation.ClusterEvaluation;
 import net.sf.javaml.core.Dataset;
+import net.sf.javaml.core.Instance;
 import net.sf.javaml.distance.DistanceMeasure;
 import net.sf.javaml.tools.data.FileHandler;
 
 import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
+import org.tunup.modules.kmeans.configuration.KMeansConfigurationWithCentroids;
+import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
 import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
 import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
+import org.tunup.modules.kmeans.utils.ClusterOperations;
 
 import com.google.common.base.Preconditions;
 
@@ -30,23 +34,29 @@ public class KMeansExecutor {
 	private static final Map<String, KMeansExecutor> INSTANCES =
 	    new HashMap<String, KMeansExecutor>();
 
-	private final String separator;
-	private final int class_index;
+	private String separator;
+	private int class_index;
 
 	private final DistanceMeasure[] distMeasures = KMeansDistanceMeasure.getDistMeasures();
 
 	private int count = 0;
 
-	private final String filePath;
+	private String filePath;
 
 	private double fitnessValue = 0;
 	private double sseScore = 0;
 	private double scsScore = 0;
 	private double score = 0;
 
-	private final ClusterEvaluationWithNaturalFitness ce;
+	private ClusterEvaluationWithNaturalFitness ce;
 
 	private Dataset[] clusters;
+
+	private Dataset data;
+
+	public Dataset getData() {
+		return data;
+	}
 
 	private Map<KMeansConfiguration, Double> cache = new HashMap<KMeansConfiguration, Double>();
 
@@ -62,16 +72,25 @@ public class KMeansExecutor {
 		}
 		return INSTANCES.get(name);
 	}
-
+	
 	public KMeansExecutor(String filePath, String separator, int classIndex) {
-		this(filePath, separator, classIndex, new KMeansAicScore());
+		this.filePath = filePath;
+		this.separator = separator;
+		this.class_index = classIndex;
+		try {
+			data = FileHandler.loadDataset(new File(filePath), class_index, separator);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public KMeansExecutor(KMeansDatasetConfiguration dataset) {
+		this(dataset.getFilePath(), dataset.getSeparator(), dataset.getClassIndex());
 	}
 
 	public KMeansExecutor(String filePath, String separator, int classIndex,
 	    ClusterEvaluationWithNaturalFitness ce) {
-		this.filePath = filePath;
-		this.separator = separator;
-		this.class_index = classIndex;
+		this(filePath, separator, classIndex);
 		this.ce = ce;
 	}
 
@@ -100,11 +119,68 @@ public class KMeansExecutor {
 		}
 	}
 
+	/**
+	 * Execute and evaluate based on the cluster evaluation specified in the
+	 * constructor.
+	 * 
+	 * @param config
+	 * @param caching
+	 *          True if the results should be cached for that configuration.
+	 * @return
+	 * @throws IOException
+	 */
+	public double executeAndEvaluate(KMeansConfiguration config, boolean caching)
+	    throws IOException {
+		if (caching) {
+			return executeAndEvaluate(config);
+		} else {
+			count++;
+			return evaluate(config, execute(config), ce);
+		}
+	}
+
+	/**
+	 * Execute k-means specifying the initial centroids.
+	 * @param config
+	 * @return
+	 */
+	public Dataset[] execute(KMeansConfigurationWithCentroids config) {
+		int k = config.getK();
+		if (k > 0) {
+			/*
+			 * Create a new instance of the KMeans algorithm, with no options
+			 * specified. By default this will generate 4 clusters.
+			 */
+			Clusterer km = new KMeansWithInitialCentroids(k, config.getIterations(),
+			    distMeasures[config.getDistanceMeasureId()],
+			    createCentroids(config.getInitCentroidsAttributes()));
+			/*
+			 * Cluster the data, it will be returned as an array of data sets, with
+			 * each dataset representing a cluster.
+			 */
+			clusters = km.cluster(data);
+			return clusters;
+		}
+		else
+		{
+			throw new RuntimeException("k must be positive: " + k);
+		}
+	}
+
+	protected Instance[] createCentroids(double[][] attributes) {
+		int m = attributes[0].length;
+		int k = attributes.length;
+		Instance[] centroids = new Instance[k];
+		for (int i = 0; i < k; i++) {
+			assert attributes[i].length == m;
+			centroids[i] = ClusterOperations.createInstance(attributes[i]);
+		}
+		return centroids;
+	}
+
 	public Dataset[] execute(KMeansConfiguration config)
 	    throws IOException {
-		Dataset data = FileHandler.loadDataset(new File(filePath), class_index, separator);
 		int k = config.getK();
-
 		if (k > 0) {
 			/*
 			 * Create a new instance of the KMeans algorithm, with no options

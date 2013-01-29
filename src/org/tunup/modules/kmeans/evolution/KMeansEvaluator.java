@@ -14,6 +14,8 @@ import org.uncommons.watchmaker.framework.FitnessEvaluator;
  */
 public class KMeansEvaluator implements FitnessEvaluator<KMeansConfiguration> {
 
+	private final boolean caching;
+	
 	KMeansExecutor executor;
 	private final int n;
 
@@ -26,14 +28,25 @@ public class KMeansEvaluator implements FitnessEvaluator<KMeansConfiguration> {
 	}
 
 	/**
-	 * Creates an instance of the k-means evaluator.
+	 * Creates an instance of the k-means evaluator. Caching disabled.
 	 * @param executor k-means executor.
 	 * @param n Number of executions to average the fitness value evaluated.
 	 */
 	public KMeansEvaluator(KMeansExecutor executor, int n) {
+		this(executor, n, false);
+	}
+	
+	/**
+	 * Creates an instance of the k-means evaluator.
+	 * @param executor k-means executor.
+	 * @param n Number of executions to average the fitness value evaluated.
+	 * @param caching True if caching is active, false otherwise.
+	 */
+	public KMeansEvaluator(KMeansExecutor executor, int n, boolean caching) {
 		super();
 		this.executor = executor;
 		this.n = n;
+		this.caching = caching;
 	}
 
 	@Override
@@ -43,7 +56,7 @@ public class KMeansEvaluator implements FitnessEvaluator<KMeansConfiguration> {
 			double fitnessVal = 0;
 			int i = 0;
 			while (i++ < n) {
-				fitnessVal += executor.executeAndEvaluate(candidate);
+				fitnessVal += executor.executeAndEvaluate(candidate, caching);
 			}
 			fitnessVal /= n;
 			return fitnessVal;
