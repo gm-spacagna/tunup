@@ -15,7 +15,7 @@ import org.tunup.modules.kmeans.dataset.IrisConfiguration;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.dataset.RedWineConfiguration;
 import org.tunup.modules.kmeans.dataset.SeedsConfiguration;
-import org.tunup.modules.kmeans.evaluation.RandIndexScore;
+import org.tunup.modules.kmeans.evaluation.RandScore;
 import org.tunup.modules.kmeans.evolution.KMeansConfigurationFactory;
 import org.tunup.modules.kmeans.execution.KMeansExecutor;
 
@@ -55,7 +55,7 @@ public class ClustersOutput extends AbstractKMeansTuning {
 		    + config.getDistanceMeasureId() + "_" + config.getIterations() + "_" + ts;
 		FileWriter fw = new FileWriter(new File(filePath));
 		Dataset[] clusters = executor.execute(config);
-		double rand = new RandIndexScore(executor.getData()).score(clusters);
+		double rand = new RandScore(executor.getData()).score(clusters);
 
 		String header = "Timestamp:" + ts + " Dataset: " + dataset.getName()
 		    + " KMeans configuration: " + config + " Rand: " + rand + "\n";

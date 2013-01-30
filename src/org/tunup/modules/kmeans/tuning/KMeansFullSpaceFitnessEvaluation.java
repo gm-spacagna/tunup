@@ -13,12 +13,13 @@ import net.sf.javaml.core.Dataset;
 import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.dataset.*;
+import org.tunup.modules.kmeans.evaluation.AdjustedRandScore;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithConfigurableDistanceMeasure;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
 import org.tunup.modules.kmeans.evaluation.DaviesBouldinScore;
 import org.tunup.modules.kmeans.evaluation.DunnScore;
 import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
-import org.tunup.modules.kmeans.evaluation.RandIndexScore;
+import org.tunup.modules.kmeans.evaluation.RandScore;
 import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
 
 /**
@@ -30,7 +31,7 @@ import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
  */
 public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 
-	static KMeansDatasetConfiguration EXEC_CONFIG = new RedWineConfiguration();
+	static KMeansDatasetConfiguration EXEC_CONFIG = new IrisConfiguration();
 
 	public static void main(String[] args) {
 
@@ -62,9 +63,10 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 	ClusterEvaluationWithNaturalFitness aic = new KMeansAicScore();
 	ClusterEvaluationWithNaturalFitness db = new DaviesBouldinScore();
 	ClusterEvaluationWithNaturalFitness dunn = new DunnScore();
-	ClusterEvaluationWithNaturalFitness rand = new RandIndexScore(executor.getData());
+	ClusterEvaluationWithNaturalFitness rand = new RandScore(executor.getData());
+	ClusterEvaluationWithNaturalFitness aRand = new AdjustedRandScore(executor.getData());
 	ClusterEvaluationWithNaturalFitness[] clusterEvaluations =
-	    new ClusterEvaluationWithNaturalFitness[] { aic, db, dunn, rand };
+	    new ClusterEvaluationWithNaturalFitness[] { aic, db, dunn, rand, aRand };
 	Map<ClusterEvaluationWithNaturalFitness, KMeansConfiguration> bestConfMap =
 	    new LinkedHashMap<>(3);
 	Map<ClusterEvaluationWithNaturalFitness, Double> bestFitnessValMap =
@@ -107,7 +109,8 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 					}
 
 					System.out.println(" fitnessVal: " + fitnessVals.get(aic) + "," + fitnessVals.get(db)
-					    + "," + fitnessVals.get(dunn) + "," + fitnessVals.get(rand));
+					    + "," + fitnessVals.get(dunn) + "," + fitnessVals.get(rand) + ","
+					    + fitnessVals.get(aRand));
 					String entry = k + " " + distMeasId + " " + iter;
 					for (ClusterEvaluationWithNaturalFitness ce : clusterEvaluations) {
 						double fitnessVal = fitnessVals.get(ce);

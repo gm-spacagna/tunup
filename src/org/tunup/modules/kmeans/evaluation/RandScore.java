@@ -7,12 +7,12 @@ import net.sf.javaml.core.Instance;
  * Rand index to compute agreement between generated clusters and a-priori knowledge of labels.
  * The dataset should contains a label for each instance.
  */
-public class RandIndexScore implements ClusterEvaluationWithNaturalFitness {
+public class RandScore implements ClusterEvaluationWithNaturalFitness {
 
 	/* initial dataset */
 	protected final Dataset dataset;
 
-	public RandIndexScore(Dataset dataset) {
+	public RandScore(Dataset dataset) {
 		super();
 		this.dataset = dataset;
 	}
@@ -108,7 +108,7 @@ public class RandIndexScore implements ClusterEvaluationWithNaturalFitness {
 		}
 	}
 
-	private Dataset getCalculatedClusternumber(Dataset[] clusteredData, Instance point) {
+	protected Dataset getCalculatedClusternumber(Dataset[] clusteredData, Instance point) {
 		for (Dataset dataset : clusteredData) {
 			if (dataset.contains(point)) {
 				return dataset;
