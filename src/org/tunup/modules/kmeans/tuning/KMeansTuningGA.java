@@ -8,11 +8,12 @@ import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
+import org.tunup.modules.kmeans.evolution.FitnessEvaluatorWithCounter;
 import org.tunup.modules.kmeans.evolution.KMeansConfigurationFactory;
 import org.tunup.modules.kmeans.evolution.KMeansCrossover;
 import org.tunup.modules.kmeans.evolution.KMeansEvaluator;
 import org.tunup.modules.kmeans.evolution.KMeansMutation;
-import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserver;
+import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserverFileWriter;
 import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionStatsWriter;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.MersenneTwisterRNG;
@@ -61,19 +62,23 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		operators.add(new KMeansMutation(new ConstantGenerator<Probability>(new Probability(
 		    PROB_MUTATION)), space));
 		operators.add(new KMeansCrossover(CROSSOVER_POINTS, new Probability(PROB_CROSSOVER)));
-		EvolutionaryOperator<KMeansConfiguration> pipeline = new EvolutionPipeline<>(operators);
-		FitnessEvaluator<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N, false);
+		EvolutionaryOperator<KMeansConfiguration> pipeline = 
+				new EvolutionPipeline<KMeansConfiguration>(operators);
+		FitnessEvaluatorWithCounter<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N,
+		    ce);
 		/* we add the cache */
-		evaluator = new CachingFitnessEvaluator<KMeansConfiguration>(evaluator);
+		FitnessEvaluator<KMeansConfiguration> cachingEvaluator =
+		    new CachingFitnessEvaluator<KMeansConfiguration>(evaluator);
 		SelectionStrategy<Object> selection = new RouletteWheelSelection();
 		Random rng = new MersenneTwisterRNG();
 
 		// generate islands:
 
 		EvolutionEngine<KMeansConfiguration> engine =
-		    new GenerationalEvolutionEngine<KMeansConfiguration>(factory, pipeline, evaluator,
+		    new GenerationalEvolutionEngine<KMeansConfiguration>(factory, pipeline, cachingEvaluator,
 		        selection, rng);
-		engine.addEvolutionObserver(new KMeansEvolutionStatsWriter(executionConfig.getName()));
+		engine.addEvolutionObserver(new KMeansEvolutionStatsWriter(dataset.getName()));
+
 		KMeansConfiguration bestConfig = engine.evolve(INIT_POP_SIZE, ELITISM,
 		    new Stagnation(STAGNATION_LIMIT, executor.getNaturalFitness()));
 		// KMeansConfiguration bestConfig = engine.evolve(INIT_POP_SIZE, ELITISM,
@@ -92,9 +97,9 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		// }
 		// }
 
-		KMeansConfigResult best = executor.getConfigResult(bestConfig);
+		KMeansConfigResult best = bestConfig.getResult();
 		System.out.println("Best ever: " + best);
-		System.out.println("Number of executions: " + executor.getCount());
+		System.out.println("Number of executions: " + evaluator.getCount());
 		return best;
 	}
 }

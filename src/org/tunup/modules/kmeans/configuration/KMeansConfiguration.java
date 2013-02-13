@@ -3,15 +3,41 @@ package org.tunup.modules.kmeans.configuration;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * An executable configuration of kmeans parameters.
  * 
  * @author Gianmario Spacagna (gmspacagna@gmail.com)
  */
+@XmlRootElement(name = "configuration")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KMeansConfiguration {
 	int k;
 	int distanceMeasureId;
 	int iterations;
+
+	@XmlTransient protected KMeansConfigResult result;
+	protected boolean evaluated = false;
+
+	
+	public KMeansConfigResult getResult() {
+		return result;
+	}
+	
+	public boolean isEvaluated() {
+		return (result == null);
+	}
+
+	public void setResult(KMeansConfigResult result) {
+		this.result = result;
+	}
+
+	public KMeansConfiguration() {
+	}
 
 	public KMeansConfiguration(int k, int distanceMeasureId, int iterations) {
 		this.k = k;
@@ -71,6 +97,18 @@ public class KMeansConfiguration {
 		default:
 			throw new RuntimeException("Parameter Index not valid " + index);
 		}
+	}
+
+	public void setK(int k) {
+		this.k = k;
+	}
+
+	public void setDistanceMeasureId(int distanceMeasureId) {
+		this.distanceMeasureId = distanceMeasureId;
+	}
+
+	public void setIterations(int iterations) {
+		this.iterations = iterations;
 	}
 
 	@Override

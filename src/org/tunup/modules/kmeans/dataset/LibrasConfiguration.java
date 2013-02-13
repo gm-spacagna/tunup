@@ -12,7 +12,7 @@ public class LibrasConfiguration extends KMeansDatasetConfiguration {
 	protected static final String NAME = "libras";
 	protected static final String FILE_PATH = "data/libras/movement_libras.data";
 	protected static final String SEPARATOR = ",";
-	protected static final int CLASS_INDEX = -1 ;
+	protected static final int CLASS_INDEX = 91 ;
 
 	public LibrasConfiguration() {
 		super(MIN_K, MAX_K, MAX_ITERATIONS, MIN_ITERATIONS, NAME, FILE_PATH, SEPARATOR,

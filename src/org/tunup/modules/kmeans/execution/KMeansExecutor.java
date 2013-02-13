@@ -18,11 +18,8 @@ import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.configuration.KMeansConfigurationWithCentroids;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
-import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
 import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
 import org.tunup.modules.kmeans.utils.ClusterOperations;
-
-import com.google.common.base.Preconditions;
 
 /**
  * Executor of KMeans with input parameters k, distance metric and iterations.
@@ -37,61 +34,62 @@ public class KMeansExecutor {
 	private String separator;
 	private int class_index;
 
+	private final KMeansDatasetConfiguration dataset;
+
 	private final DistanceMeasure[] distMeasures = KMeansDistanceMeasure.getDistMeasures();
 
-	private int count = 0;
 
 	private String filePath;
 
 	private double fitnessValue = 0;
-	private double sseScore = 0;
-	private double scsScore = 0;
-	private double score = 0;
 
 	private ClusterEvaluationWithNaturalFitness ce;
 
 	private Dataset[] clusters;
 
 	private Dataset data;
-
+	
 	public Dataset getData() {
 		return data;
 	}
-
-	private Map<KMeansConfiguration, Double> cache = new HashMap<KMeansConfiguration, Double>();
 
 	public static KMeansExecutor getInstance(String name) {
 		return INSTANCES.get(name);
 	}
 
-	public static KMeansExecutor createInstance(String name, String filePath, String separator,
-	    int dim, ClusterEvaluationWithNaturalFitness ce) {
-		if (!INSTANCES.containsKey(name)) {
-			KMeansExecutor instance = new KMeansExecutor(filePath, separator, dim, ce);
-			INSTANCES.put(name, instance);
-		}
-		return INSTANCES.get(name);
+	public static KMeansExecutor createInstance(KMeansDatasetConfiguration dataset) {
+		return createInstance(dataset, null);
 	}
-	
-	public KMeansExecutor(String filePath, String separator, int classIndex) {
-		this.filePath = filePath;
-		this.separator = separator;
-		this.class_index = classIndex;
+
+	public static KMeansExecutor createInstance(KMeansDatasetConfiguration dataset,
+	    ClusterEvaluationWithNaturalFitness ce) {
+		if (!INSTANCES.containsKey(dataset.getName())) {
+			KMeansExecutor instance = new KMeansExecutor(dataset, ce);
+			INSTANCES.put(dataset.getName(), instance);
+		}
+		return INSTANCES.get(dataset.getName());
+	}
+
+	public KMeansExecutor(KMeansDatasetConfiguration dataset, ClusterEvaluationWithNaturalFitness ce) {
+		this(dataset, ce, "");
+	}
+
+	public KMeansExecutor(KMeansDatasetConfiguration dataset, ClusterEvaluationWithNaturalFitness ce,
+	    String relPathPrefix) {
+		this.dataset = dataset;
+		this.filePath = dataset.getFilePath();
+		this.separator = dataset.getSeparator();
+		this.class_index = dataset.getClassIndex();
+		this.ce = ce;
 		try {
-			data = FileHandler.loadDataset(new File(filePath), class_index, separator);
+			data = FileHandler.loadDataset(new File(relPathPrefix + filePath), class_index, separator);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public KMeansExecutor(KMeansDatasetConfiguration dataset) {
-		this(dataset.getFilePath(), dataset.getSeparator(), dataset.getClassIndex());
-	}
 
-	public KMeansExecutor(String filePath, String separator, int classIndex,
-	    ClusterEvaluationWithNaturalFitness ce) {
-		this(filePath, separator, classIndex);
-		this.ce = ce;
+	public KMeansExecutor(KMeansDatasetConfiguration dataset) {
+		this(dataset, null);
 	}
 
 	public double executeAndEvaluate(int k, int distMeasureId, int iterations)
@@ -109,38 +107,12 @@ public class KMeansExecutor {
 	 * @throws IOException
 	 */
 	public double executeAndEvaluate(KMeansConfiguration config) throws IOException {
-		if (cache.containsKey(config)) {
-			return cache.get(config);
-		} else {
-			double fitnessValue = evaluate(config, execute(config), ce);
-			cache.put(config, fitnessValue);
-			count++;
-			return fitnessValue;
-		}
-	}
-
-	/**
-	 * Execute and evaluate based on the cluster evaluation specified in the
-	 * constructor.
-	 * 
-	 * @param config
-	 * @param caching
-	 *          True if the results should be cached for that configuration.
-	 * @return
-	 * @throws IOException
-	 */
-	public double executeAndEvaluate(KMeansConfiguration config, boolean caching)
-	    throws IOException {
-		if (caching) {
-			return executeAndEvaluate(config);
-		} else {
-			count++;
-			return evaluate(config, execute(config), ce);
-		}
+		return evaluate(config, execute(config), ce);
 	}
 
 	/**
 	 * Execute k-means specifying the initial centroids.
+	 * 
 	 * @param config
 	 * @return
 	 */
@@ -178,8 +150,7 @@ public class KMeansExecutor {
 		return centroids;
 	}
 
-	public Dataset[] execute(KMeansConfiguration config)
-	    throws IOException {
+	public Dataset[] execute(KMeansConfiguration config) {
 		int k = config.getK();
 		if (k > 0) {
 			/*
@@ -203,10 +174,7 @@ public class KMeansExecutor {
 
 	public double evaluate(KMeansConfiguration config, Dataset[] clusters, ClusterEvaluation ce) {
 		try {
-			score = ce.score(clusters);
-			fitnessValue = score;
-			cache.put(config, fitnessValue);
-			return fitnessValue;
+			return ce.score(clusters);
 		} catch (IndexOutOfBoundsException e) {
 			System.out.println("IndexOutOfBoundsException on: "
 			    + config + " FitnessValue: " + fitnessValue);
@@ -216,39 +184,26 @@ public class KMeansExecutor {
 		}
 	}
 
+	public KMeansConfigResult executeAndEvaluate(KMeansConfiguration config, int n,
+	    ClusterEvaluation[] ces) throws IOException {
+		double fitnessValues[][] = new double[ces.length][n];
+
+		for (int i = 0; i < n; i++) {
+				clusters = execute(config);
+				for (int c = 0; c < ces.length; c++) {
+					fitnessValues[c][i] = evaluate(config, clusters, ces[c]);
+				}
+		}
+		KMeansConfigResult result = new KMeansConfigResult(dataset, config, n, ces, fitnessValues);
+		return result;
+	}
+
 	public double getFitnessValue() {
 		return fitnessValue;
 	}
 
-	public double getSseScore() {
-		return sseScore;
-	}
-
-	public double getScsScore() {
-		return scsScore;
-	}
-
 	public Dataset[] getClusters() {
 		return clusters;
-	}
-
-	public KMeansConfigResult getConfigResult(KMeansConfiguration config) {
-		if (cache.containsKey(config)) {
-			return new KMeansConfigResult(config, cache.get(config));
-		}
-		throw new RuntimeException("Configuration result not available");
-	}
-
-	public int getCount() {
-		return count;
-	}
-
-	public void resetCount() {
-		count = 0;
-	}
-
-	public void clearCache() {
-		cache.clear();
 	}
 
 	public boolean getNaturalFitness() {

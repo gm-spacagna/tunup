@@ -8,6 +8,7 @@ import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
+import org.tunup.modules.kmeans.evolution.FitnessEvaluatorWithCounter;
 import org.tunup.modules.kmeans.evolution.KMeansConfigurationFactory;
 import org.tunup.modules.kmeans.evolution.KMeansCrossover;
 import org.tunup.modules.kmeans.evolution.KMeansEvaluator;
@@ -18,6 +19,7 @@ import org.tunup.modules.kmeans.space.KMeansParametersSpace;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.MersenneTwisterRNG;
 import org.uncommons.maths.random.Probability;
+import org.uncommons.watchmaker.framework.CachingFitnessEvaluator;
 import org.uncommons.watchmaker.framework.CandidateFactory;
 import org.uncommons.watchmaker.framework.EvolutionEngine;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
@@ -42,10 +44,10 @@ import org.uncommons.watchmaker.framework.termination.TargetFitness;
  */
 public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 
-	KMeansTuningGAWithIslands(KMeansDatasetConfiguration config, 
-			ClusterEvaluationWithNaturalFitness ce) {
-	  super(config, ce);
-  }
+	KMeansTuningGAWithIslands(KMeansDatasetConfiguration config,
+	    ClusterEvaluationWithNaturalFitness ce) {
+		super(config, ce);
+	}
 
 	// GA specific parameters:
 	private static final double PROB_MUTATION = 0.1;
@@ -59,6 +61,7 @@ public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 	private static final int EPOCH_LENGTH = 1;
 	private static final int MIGRANT_COUNT = 0;
 	private static final double FV_TH = 9900.0;
+	private static final int N = 10;
 
 	@Override
 	public KMeansConfigResult getBestConfig() {
@@ -78,7 +81,10 @@ public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 		operators.add(new KMeansMutation(new ConstantGenerator<Probability>(new Probability(
 		    PROB_MUTATION)), space));
 		EvolutionaryOperator<KMeansConfiguration> pipeline = new EvolutionPipeline<>(operators);
-		FitnessEvaluator<KMeansConfiguration> evaluator = new KMeansEvaluator(executor);
+		FitnessEvaluatorWithCounter<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N,
+		    ce);
+		FitnessEvaluator<KMeansConfiguration> cachingEvaluator =
+		    new CachingFitnessEvaluator<KMeansConfiguration>(evaluator);
 		SelectionStrategy<Object> selection = new StochasticUniversalSampling();
 		Random rng = new MersenneTwisterRNG();
 
@@ -97,7 +103,7 @@ public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 		// In case of uniform generated islands:
 		IslandEvolution<KMeansConfiguration> engine = new
 		    IslandEvolution<KMeansConfiguration>(N_ISLANDS, new RingMigration(), new
-		        KMeansConfigurationFactory(space), pipeline, evaluator, selection, rng);
+		        KMeansConfigurationFactory(space), pipeline, cachingEvaluator, selection, rng);
 
 		// IslandEvolution<KMeansConfiguration> engine =
 		// new IslandEvolution<KMeansConfiguration>(islands, new RingMigration(),
@@ -113,9 +119,9 @@ public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 		    MIGRANT_COUNT,
 		    new TargetFitness(FV_TH, false));
 
-		KMeansConfigResult best = executor.getConfigResult(bestConfig);
+		KMeansConfigResult best = bestConfig.getResult();
 		System.out.println("Best ever: " + best);
-		System.out.println("Number of executions: " + executor.getCount());
+		System.out.println("Number of executions: " + evaluator.getCount());
 		return best;
 	}
 }

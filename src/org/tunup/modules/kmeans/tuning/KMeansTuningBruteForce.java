@@ -1,7 +1,5 @@
 package org.tunup.modules.kmeans.tuning;
 
-import java.io.IOException;
-
 import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
@@ -26,11 +24,11 @@ public class KMeansTuningBruteForce extends AbstractKMeansTuning {
 	public KMeansConfigResult getBestConfig() {
 		double best = Double.MAX_VALUE;
 		KMeansConfiguration bestConfig = null;
-		for (int k = executionConfig.getMinK(); k <= executionConfig.getMaxK(); k++) {
-			for (int distMeasId = 0; distMeasId < executionConfig.getDistMeasures(); distMeasId++) {
-				for (int iter = executionConfig.getMinIterations(); iter <= executionConfig
+		KMeansEvaluator evaluator = new KMeansEvaluator(executor, N, ce);
+		for (int k = dataset.getMinK(); k <= dataset.getMaxK(); k++) {
+			for (int distMeasId = 0; distMeasId < dataset.getDistMeasures(); distMeasId++) {
+				for (int iter = dataset.getMinIterations(); iter <= dataset
 				    .getMaxIterations(); iter++) {
-					KMeansEvaluator evaluator = new KMeansEvaluator(executor, N);
 					Double fitnessVal = evaluator.getFitness(new KMeansConfiguration(k, distMeasId, iter),
 					    null);
 
@@ -42,9 +40,9 @@ public class KMeansTuningBruteForce extends AbstractKMeansTuning {
 				}
 			}
 		}
-		KMeansConfigResult bestConfigResult = executor.getConfigResult(bestConfig);
-		System.out.println("Best is : " + executor.getConfigResult(bestConfig));
-		System.out.println("Number of executions: " + executor.getCount());
+		KMeansConfigResult bestConfigResult = bestConfig.getResult();
+		System.out.println("Best is : " + bestConfigResult);
+		System.out.println("Number of executions: " + evaluator.getCount());
 		return bestConfigResult;
 	}
 }

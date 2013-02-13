@@ -20,6 +20,7 @@ import org.tunup.modules.kmeans.evaluation.DaviesBouldinScore;
 import org.tunup.modules.kmeans.evaluation.DunnScore;
 import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
 import org.tunup.modules.kmeans.evaluation.RandScore;
+import org.tunup.modules.kmeans.evaluation.SilhouetteScore;
 import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
 
 /**
@@ -31,14 +32,14 @@ import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
  */
 public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 
-	static KMeansDatasetConfiguration EXEC_CONFIG = new IrisConfiguration();
+	static KMeansDatasetConfiguration EXEC_CONFIG = new RedWineConfiguration();
 
 	public static void main(String[] args) {
 
 		String name = EXEC_CONFIG.getName();
 		System.out.println("KMeans full space fitness evaluation dataset " + name);
 		int n = 20; // number of executions to average
-		String filePath = "output/" + name + "_iter20_n" + n + "_labels" + ".dat";
+		String filePath = "output/" + name + "_iter20_n" + n + "_complete" + ".dat";
 		KMeansFullSpaceFitnessEvaluation instance = new KMeansFullSpaceFitnessEvaluation(
 		    EXEC_CONFIG, null, filePath, n);
 		instance.writeOutput();
@@ -65,8 +66,10 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 	ClusterEvaluationWithNaturalFitness dunn = new DunnScore();
 	ClusterEvaluationWithNaturalFitness rand = new RandScore(executor.getData());
 	ClusterEvaluationWithNaturalFitness aRand = new AdjustedRandScore(executor.getData());
+	ClusterEvaluationWithNaturalFitness sil = new SilhouetteScore();
+	
 	ClusterEvaluationWithNaturalFitness[] clusterEvaluations =
-	    new ClusterEvaluationWithNaturalFitness[] { aic, db, dunn, rand, aRand };
+	    new ClusterEvaluationWithNaturalFitness[] { aic, db, dunn, sil, aRand };
 	Map<ClusterEvaluationWithNaturalFitness, KMeansConfiguration> bestConfMap =
 	    new LinkedHashMap<>(3);
 	Map<ClusterEvaluationWithNaturalFitness, Double> bestFitnessValMap =
@@ -84,8 +87,8 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 
 		try {
 			FileWriter fw = new FileWriter(file);
-			for (int k = executionConfig.getMinK(); k <= executionConfig.getMaxK(); k++) {
-				for (int distMeasId = 0; distMeasId < executionConfig.getDistMeasures(); distMeasId++) {
+			for (int k = dataset.getMinK(); k <= dataset.getMaxK(); k++) {
+				for (int distMeasId = 0; distMeasId < dataset.getDistMeasures(); distMeasId++) {
 					int iter = 20;
 					KMeansConfiguration config = new KMeansConfiguration(k, distMeasId, iter);
 					System.out.println(config);

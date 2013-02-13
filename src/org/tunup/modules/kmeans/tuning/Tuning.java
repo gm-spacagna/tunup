@@ -19,6 +19,8 @@ public class Tuning {
 		    new WineConfiguration(),
 		    new IrisConfiguration(), new AbaloneConfiguration(), new SeedsConfiguration(),
 		    new RedWineConfiguration() };
+
+		configurations = new KMeansDatasetConfiguration[] { new IrisConfiguration() };
 		ClusterEvaluationWithNaturalFitness ce;
 		ce = new KMeansAicScore();
 		for (KMeansDatasetConfiguration config : configurations) {
@@ -26,10 +28,13 @@ public class Tuning {
 
 			System.out.println("KMeans GA Tuning");
 			AbstractKMeansTuning tuning = new KMeansTuningGA(config, ce);
-			tuning.getExecutor().clearCache();
-			tuning.getExecutor().resetCount();
 			tuning.getBestConfig();
 			System.out.println("");
+
+			 System.out.println("KMeans Parallel GA Tuning");
+			 tuning = new KMeansTuningParallelGA(config, ce);
+			 tuning.getBestConfig();
+			 System.out.println("");
 
 			/*
 			 * System.out.println("KMeans GA Tuning with Islands"); tuning = new
