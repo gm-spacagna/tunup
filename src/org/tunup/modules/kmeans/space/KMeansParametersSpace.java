@@ -81,7 +81,7 @@ public class KMeansParametersSpace extends ParametersSpace {
 	    List<KMeansParameterDimension<Integer>> subK,
 	    List<KMeansParameterDimension<Integer>> subDistMeasId,
 	    List<KMeansParameterDimension<Integer>> subIterations) {
-		List<KMeansParametersSpace> spaces = new ArrayList<>(n);
+		List<KMeansParametersSpace> spaces = new ArrayList<KMeansParametersSpace>(n);
 
 		List<Triple<KMeansParameterDimension<Integer>>> subSpaces =
 		    new ArrayList<Triple<KMeansParameterDimension<Integer>>>(subK.size() * subDistMeasId.size()

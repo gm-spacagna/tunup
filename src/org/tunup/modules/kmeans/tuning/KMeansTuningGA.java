@@ -13,7 +13,7 @@ import org.tunup.modules.kmeans.evolution.KMeansConfigurationFactory;
 import org.tunup.modules.kmeans.evolution.KMeansCrossover;
 import org.tunup.modules.kmeans.evolution.KMeansEvaluator;
 import org.tunup.modules.kmeans.evolution.KMeansMutation;
-import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserverFileWriter;
+import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionObserverConsole;
 import org.tunup.modules.kmeans.evolution.monitoring.KMeansEvolutionStatsWriter;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.MersenneTwisterRNG;
@@ -45,14 +45,16 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 	private static final int CROSSOVER_POINTS = 1;
 	private static final double PROB_CROSSOVER = 0.9;
 	private static final int INIT_POP_SIZE = 6;
-	private static final int STAGNATION_LIMIT = 3;
+	private static final int STAGNATION_LIMIT = 5;
 	private static final int MAX_EVOLUTIONS = 100;
 	private static final int ELITISM = 1;
 	private static final double FV_TH = 9900.0;
-	private static final int N = 10;
-
+	private static final int N = 20;
+	
 	@Override
 	public KMeansConfigResult getBestConfig() {
+		
+		start = System.currentTimeMillis();
 
 		// set up the GA algorithm:
 		CandidateFactory<KMeansConfiguration> factory = new KMeansConfigurationFactory(space);
@@ -72,12 +74,11 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		SelectionStrategy<Object> selection = new RouletteWheelSelection();
 		Random rng = new MersenneTwisterRNG();
 
-		// generate islands:
-
 		EvolutionEngine<KMeansConfiguration> engine =
 		    new GenerationalEvolutionEngine<KMeansConfiguration>(factory, pipeline, cachingEvaluator,
 		        selection, rng);
-		engine.addEvolutionObserver(new KMeansEvolutionStatsWriter(dataset.getName()));
+		engine.addEvolutionObserver(new KMeansEvolutionStatsWriter("simpleGA", dataset.getName()));
+		engine.addEvolutionObserver(new KMeansEvolutionObserverConsole());
 
 		KMeansConfiguration bestConfig = engine.evolve(INIT_POP_SIZE, ELITISM,
 		    new Stagnation(STAGNATION_LIMIT, executor.getNaturalFitness()));
@@ -97,6 +98,8 @@ public final class KMeansTuningGA extends AbstractKMeansTuning {
 		// }
 		// }
 
+		end = System.currentTimeMillis();
+		
 		KMeansConfigResult best = bestConfig.getResult();
 		System.out.println("Best ever: " + best);
 		System.out.println("Number of executions: " + evaluator.getCount());

@@ -26,7 +26,7 @@ public class KMeansTuningBruteForce extends AbstractKMeansTuning {
 		KMeansConfiguration bestConfig = null;
 		KMeansEvaluator evaluator = new KMeansEvaluator(executor, N, ce);
 		for (int k = dataset.getMinK(); k <= dataset.getMaxK(); k++) {
-			for (int distMeasId = 0; distMeasId < dataset.getDistMeasures(); distMeasId++) {
+			for (int distMeasId : dataset.getDistanceMeasureIds()) {
 				for (int iter = dataset.getMinIterations(); iter <= dataset
 				    .getMaxIterations(); iter++) {
 					Double fitnessVal = evaluator.getFitness(new KMeansConfiguration(k, distMeasId, iter),

@@ -29,6 +29,12 @@ public abstract class AbstractKMeansTuning {
 	public KMeansExecutor getExecutor() {
 		return executor;
 	}
+	
+	protected long start = 0, end = 0;
+	
+	public Long getTime() {
+		return end - start;
+	}
 
 	AbstractKMeansTuning(KMeansDatasetConfiguration dataset, ClusterEvaluationWithNaturalFitness ce) {
 		this.ce = ce;

@@ -20,7 +20,7 @@ public class KMeansEvaluator implements FitnessEvaluatorWithCounter<KMeansConfig
 	protected final ClusterEvaluationWithNaturalFitness ce;
 
 	protected int count = 0;
-	
+
 	/**
 	 * Creates an instance of the k-means evaluator.
 	 * 
@@ -42,16 +42,12 @@ public class KMeansEvaluator implements FitnessEvaluatorWithCounter<KMeansConfig
 	@Override
 	public double getFitness(KMeansConfiguration candidate,
 	    List<? extends KMeansConfiguration> population) {
-		try {
-			KMeansConfigResult result = executor.executeAndEvaluate(
-			    candidate, n,
-			    new ClusterEvaluationWithNaturalFitness[] { ce });
-			candidate.setResult(result);
-			count++;
-			return result.getAverage()[0];
-		} catch (IOException e) {
-			throw new RuntimeException(e.getMessage());
-		}
+		KMeansConfigResult result = executor.executeAndEvaluate(
+		    candidate, n,
+		    new ClusterEvaluationWithNaturalFitness[] { ce });
+		candidate.setResult(result);
+		count++;
+		return result.getMedian()[0];
 	}
 
 	@Override

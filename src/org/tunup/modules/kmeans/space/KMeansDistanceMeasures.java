@@ -1,14 +1,19 @@
 package org.tunup.modules.kmeans.space;
 
+
 import net.sf.javaml.distance.AngularDistance;
 import net.sf.javaml.distance.ChebychevDistance;
 import net.sf.javaml.distance.CosineDistance;
 import net.sf.javaml.distance.CosineSimilarity;
 import net.sf.javaml.distance.DistanceMeasure;
 import net.sf.javaml.distance.EuclideanDistance;
+import net.sf.javaml.distance.JaccardIndexDistance;
+import net.sf.javaml.distance.JaccardIndexSimilarity;
 import net.sf.javaml.distance.ManhattanDistance;
 import net.sf.javaml.distance.MinkowskiDistance;
 import net.sf.javaml.distance.PearsonCorrelationCoefficient;
+import net.sf.javaml.distance.RBFKernel;
+import net.sf.javaml.distance.SpearmanFootruleDistance;
 import net.sf.javaml.distance.SpearmanRankCorrelation;
 
 /**
@@ -16,7 +21,7 @@ import net.sf.javaml.distance.SpearmanRankCorrelation;
  * 
  * @author Gianmario Spacagna (gmspacagna@gmail.com)
  */
-public class KMeansDistanceMeasure {
+public class KMeansDistanceMeasures {
 
 	private static final DistanceMeasure[] DIST_MEASURES = {
 	    new AngularDistance(), // 0
@@ -24,13 +29,13 @@ public class KMeansDistanceMeasure {
 	    new CosineDistance(), // 2
 	    new CosineSimilarity(), // 3
 	    new EuclideanDistance(), // 4
-	    // new JaccardIndexDistance(), // 5
-	    // new JaccardIndexSimilarity(), // 6
+	    new JaccardIndexDistance(), // 5
+	    new JaccardIndexSimilarity(), // 6
 	    new ManhattanDistance(), // 7
 	    new MinkowskiDistance(), // 8
 	    new PearsonCorrelationCoefficient(), // 9
-	    // new RBFKernel(), // 10
-	    // new SpearmanFootruleDistance(), // 11
+	    new RBFKernel(), // 10
+	    new SpearmanFootruleDistance(), // 11
 	    new SpearmanRankCorrelation() // 12
 	};
 

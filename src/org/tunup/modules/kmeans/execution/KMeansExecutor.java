@@ -16,9 +16,11 @@ import net.sf.javaml.tools.data.FileHandler;
 import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
 import org.tunup.modules.kmeans.configuration.KMeansConfigurationWithCentroids;
+import org.tunup.modules.kmeans.data_operations.DataLoader;
+import org.tunup.modules.kmeans.data_operations.DataNormalizer;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.evaluation.ClusterEvaluationWithNaturalFitness;
-import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
+import org.tunup.modules.kmeans.space.KMeansDistanceMeasures;
 import org.tunup.modules.kmeans.utils.ClusterOperations;
 
 /**
@@ -36,7 +38,7 @@ public class KMeansExecutor {
 
 	private final KMeansDatasetConfiguration dataset;
 
-	private final DistanceMeasure[] distMeasures = KMeansDistanceMeasure.getDistMeasures();
+	private final DistanceMeasure[] distMeasures = KMeansDistanceMeasures.getDistMeasures();
 
 
 	private String filePath;
@@ -48,6 +50,8 @@ public class KMeansExecutor {
 	private Dataset[] clusters;
 
 	private Dataset data;
+
+	private String relFilePath;
 	
 	public Dataset getData() {
 		return data;
@@ -78,14 +82,16 @@ public class KMeansExecutor {
 	    String relPathPrefix) {
 		this.dataset = dataset;
 		this.filePath = dataset.getFilePath();
+		this.relFilePath = relPathPrefix;
 		this.separator = dataset.getSeparator();
 		this.class_index = dataset.getClassIndex();
 		this.ce = ce;
 		try {
-			data = FileHandler.loadDataset(new File(relPathPrefix + filePath), class_index, separator);
+	    data = DataLoader.loadData(dataset, relPathPrefix);
+	    DataNormalizer.normalizeData(data);
 		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	    e.printStackTrace();
+    }
 	}
 
 	public KMeansExecutor(KMeansDatasetConfiguration dataset) {
@@ -185,7 +191,7 @@ public class KMeansExecutor {
 	}
 
 	public KMeansConfigResult executeAndEvaluate(KMeansConfiguration config, int n,
-	    ClusterEvaluation[] ces) throws IOException {
+	    ClusterEvaluation[] ces) {
 		double fitnessValues[][] = new double[ces.length][n];
 
 		for (int i = 0; i < n; i++) {

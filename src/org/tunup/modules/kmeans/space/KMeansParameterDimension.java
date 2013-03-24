@@ -49,7 +49,7 @@ public class KMeansParameterDimension<T> extends ParameterDimension<T> {
 		int counter = 0;
 		for (int i = 0; i < vals.size(); i++) {
 			if (i == subMax) {
-				ranges.add(new KMeansParameterDimension<>(name + counter++, vals.subList(subMin, subMax + 1)));
+				ranges.add(new KMeansParameterDimension<T>(name + counter++, vals.subList(subMin, subMax + 1)));
 				subMin = subMax + 1;
 				subMax += delta;
 			}
@@ -87,7 +87,7 @@ public class KMeansParameterDimension<T> extends ParameterDimension<T> {
 					remainingVals.remove(pos);
 				}
 			}
-			result.add(new KMeansParameterDimension<>(name + i, subValues));
+			result.add(new KMeansParameterDimension<T>(name + i, subValues));
 		}
 		return result;
 	}

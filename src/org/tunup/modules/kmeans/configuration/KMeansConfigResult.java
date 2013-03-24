@@ -25,8 +25,10 @@ public class KMeansConfigResult {
 	String datasetName;
 	KMeansConfiguration config;
 	double[][] fitnessValues;
-	int n; 
-	
+	int n;
+	long requestT;
+	long responseT;
+
 	public KMeansDatasetConfiguration getDataset() {
 		return dataset;
 	}
@@ -46,12 +48,29 @@ public class KMeansConfigResult {
 	public void setN(int n) {
 		this.n = n;
 	}
+
 	public void setConfig(KMeansConfiguration config) {
 		this.config = config;
 	}
 
 	public void setFitnessValues(double[][] fitnessValues) {
 		this.fitnessValues = fitnessValues;
+	}
+	
+	public long getRequestT() {
+		return requestT;
+	}
+
+	public void setRequestT(long requestT) {
+		this.requestT = requestT;
+	}
+
+	public long getResponseT() {
+		return responseT;
+	}
+
+	public void setResponseT(long responseT) {
+		this.responseT = responseT;
 	}
 
 	public KMeansConfigResult() {
@@ -68,6 +87,7 @@ public class KMeansConfigResult {
 		assert fitnessValues.length == ce.length;
 		assert fitnessValues[0].length == n;
 	}
+
 	public KMeansConfiguration getConfig() {
 		return config;
 	}
@@ -77,7 +97,7 @@ public class KMeansConfigResult {
 	}
 
 	@XmlTransient
-	public double[] getAverage() {
+	public double[] getMean() {
 		double[] avg = new double[fitnessValues.length];
 		if (n == 0) {
 			return new double[0];
@@ -93,13 +113,32 @@ public class KMeansConfigResult {
 	}
 
 	@XmlTransient
+	public double[] getMedian() {
+		double[] median = new double[fitnessValues.length];
+		for (int i = 0; i < fitnessValues.length; i++) {
+			double[] vals = fitnessValues[i].clone();
+			Arrays.sort(vals);
+			double medianVal = 0;
+			if (n % 2 == 0) {
+				// if even
+				medianVal = (vals[(n / 2) - 1] + vals[n / 2]) / 2;
+			} else {
+				// if odd
+				medianVal = vals[n / 2];
+			}
+			median[i] = medianVal;
+		}
+		return median;
+	}
+
+	@XmlTransient
 	public double[] getStandardDeviation() {
 		if (n < 2) {
 			return new double[0];
 		}
 
 		double[] stdev = new double[fitnessValues.length];
-		double[] avg2 = getAverage();
+		double[] avg2 = getMean();
 		for (int i = 0; i < avg2.length; i++) {
 			avg2[i] = avg2[i] * avg2[i];
 		}

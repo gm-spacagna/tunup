@@ -1,6 +1,5 @@
 package org.tunup.modules.kmeans.dataset;
 
-
 public class WhiteWineConfiguration extends KMeansDatasetConfiguration {
 
 	protected static final int MIN_K = 2;
@@ -11,10 +10,13 @@ public class WhiteWineConfiguration extends KMeansDatasetConfiguration {
 	protected static final String NAME = "whitewine";
 	protected static final String FILE_PATH = "data/winequality/winequality-white.csv";
 	protected static final String SEPARATOR = ";";
-	protected static final int CLASS_INDEX = 11 ;
+	protected static final int CLASS_INDEX = 11;
+	protected static final int[] DISTANCE_MEASURE_IDS = new int[] {
+	    0, 1, 2, 3, 4, 7, 8, 9, 10, 12
+	};
 
 	public WhiteWineConfiguration() {
-		super(MIN_K, MAX_K, MAX_ITERATIONS, MIN_ITERATIONS, NAME, FILE_PATH, SEPARATOR,
-		    CLASS_INDEX);
+		super(MIN_K, MAX_K, DISTANCE_MEASURE_IDS, MAX_ITERATIONS, MIN_ITERATIONS, NAME, FILE_PATH,
+		    SEPARATOR, CLASS_INDEX);
 	}
 }

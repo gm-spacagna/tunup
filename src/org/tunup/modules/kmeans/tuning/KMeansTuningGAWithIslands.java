@@ -80,7 +80,7 @@ public final class KMeansTuningGAWithIslands extends AbstractKMeansTuning {
 		operators.add(new KMeansCrossover(CROSSOVER_POINTS, new Probability(PROB_CROSSOVER)));
 		operators.add(new KMeansMutation(new ConstantGenerator<Probability>(new Probability(
 		    PROB_MUTATION)), space));
-		EvolutionaryOperator<KMeansConfiguration> pipeline = new EvolutionPipeline<>(operators);
+		EvolutionaryOperator<KMeansConfiguration> pipeline = new EvolutionPipeline<KMeansConfiguration>(operators);
 		FitnessEvaluatorWithCounter<KMeansConfiguration> evaluator = new KMeansEvaluator(executor, N,
 		    ce);
 		FitnessEvaluator<KMeansConfiguration> cachingEvaluator =

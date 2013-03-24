@@ -11,6 +11,7 @@ import net.sf.javaml.core.Instance;
 
 import org.tunup.modules.kmeans.configuration.KMeansConfigResult;
 import org.tunup.modules.kmeans.configuration.KMeansConfiguration;
+import org.tunup.modules.kmeans.dataset.Arcbek2Configuration;
 import org.tunup.modules.kmeans.dataset.IrisConfiguration;
 import org.tunup.modules.kmeans.dataset.KMeansDatasetConfiguration;
 import org.tunup.modules.kmeans.dataset.RedWineConfiguration;
@@ -23,7 +24,7 @@ public class ClustersOutput extends AbstractKMeansTuning {
 
 	public static void main(String[] args) {
 		KMeansDatasetConfiguration config;
-		config = new RedWineConfiguration();
+		config = new Arcbek2Configuration();
 		System.out.println("Clusters output of " + config);
 		ClustersOutput instance = new ClustersOutput(config);
 		try {

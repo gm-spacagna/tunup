@@ -29,7 +29,7 @@ public class KMeansConfiguration {
 	}
 	
 	public boolean isEvaluated() {
-		return (result == null);
+		return (result != null);
 	}
 
 	public void setResult(KMeansConfigResult result) {

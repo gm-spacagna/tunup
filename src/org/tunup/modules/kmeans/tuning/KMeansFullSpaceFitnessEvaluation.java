@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ import org.tunup.modules.kmeans.evaluation.DunnScore;
 import org.tunup.modules.kmeans.evaluation.KMeansAicScore;
 import org.tunup.modules.kmeans.evaluation.RandScore;
 import org.tunup.modules.kmeans.evaluation.SilhouetteScore;
-import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
+import org.tunup.modules.kmeans.space.KMeansDistanceMeasures;
 
 /**
  * Evaluation of the fitness functions in the entire k-means configuration
@@ -32,19 +33,23 @@ import org.tunup.modules.kmeans.space.KMeansDistanceMeasure;
  */
 public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 
-	static KMeansDatasetConfiguration EXEC_CONFIG = new RedWineConfiguration();
-
+	static KMeansDatasetConfiguration DATASET = new Arcbek2Configuration();
+	static int N = 20; // number of executions to average
+	
 	public static void main(String[] args) {
 
-		String name = EXEC_CONFIG.getName();
+		String name = DATASET.getName();
 		System.out.println("KMeans full space fitness evaluation dataset " + name);
-		int n = 20; // number of executions to average
-		String filePath = "output/" + name + "_iter20_n" + n + "_complete" + ".dat";
+		
+		String filePath = "output/" + name + "_iter20_n" + N + "_median" + ".dat";
+		long start = System.currentTimeMillis();
 		KMeansFullSpaceFitnessEvaluation instance = new KMeansFullSpaceFitnessEvaluation(
-		    EXEC_CONFIG, null, filePath, n);
+		    DATASET, null, filePath, N);
 		instance.writeOutput();
 		System.out.println("Output at " + filePath);
 		instance.printBest();
+		long end = System.currentTimeMillis();
+		System.out.println("Total time: " + (end - start));
 	}
 
 	private void printBest() {
@@ -58,7 +63,7 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 	    ClusterEvaluationWithNaturalFitness ce, String filePath, int n) {
 		super(config, ce);
 		this.filePath = filePath;
-		this.n = n;
+		this.N = n;
 	}
 
 	ClusterEvaluationWithNaturalFitness aic = new KMeansAicScore();
@@ -67,13 +72,13 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 	ClusterEvaluationWithNaturalFitness rand = new RandScore(executor.getData());
 	ClusterEvaluationWithNaturalFitness aRand = new AdjustedRandScore(executor.getData());
 	ClusterEvaluationWithNaturalFitness sil = new SilhouetteScore();
-	
+
 	ClusterEvaluationWithNaturalFitness[] clusterEvaluations =
-	    new ClusterEvaluationWithNaturalFitness[] { aic, db, dunn, sil, aRand };
+	    new ClusterEvaluationWithNaturalFitness[] { aic, dunn, db, sil };
 	Map<ClusterEvaluationWithNaturalFitness, KMeansConfiguration> bestConfMap =
-	    new LinkedHashMap<>(3);
+	    new LinkedHashMap<ClusterEvaluationWithNaturalFitness, KMeansConfiguration>(3);
 	Map<ClusterEvaluationWithNaturalFitness, Double> bestFitnessValMap =
-	    new LinkedHashMap<>(3);
+	    new LinkedHashMap<ClusterEvaluationWithNaturalFitness, Double>(3);
 	private final String filePath;
 	private int n;
 
@@ -88,35 +93,23 @@ public class KMeansFullSpaceFitnessEvaluation extends AbstractKMeansTuning {
 		try {
 			FileWriter fw = new FileWriter(file);
 			for (int k = dataset.getMinK(); k <= dataset.getMaxK(); k++) {
-				for (int distMeasId = 0; distMeasId < dataset.getDistMeasures(); distMeasId++) {
+				for (int distMeasId : dataset.getDistanceMeasureIds()) {
 					int iter = 20;
 					KMeansConfiguration config = new KMeansConfiguration(k, distMeasId, iter);
 					System.out.println(config);
 
-					Map<ClusterEvaluation, Double> fitnessVals = new LinkedHashMap<>(3);
-
-					for (int i = 0; i < n; i++) {
-						Dataset[] clusters = executor.execute(config);
-						for (ClusterEvaluationWithNaturalFitness ce : clusterEvaluations) {
-							Double val = fitnessVals.get(ce);
-							if (val == null) {
-								val = new Double(0);
-								fitnessVals.put(ce, val);
-							}
-							val += executor.evaluate(config, clusters, ce);
-							if (i == n - 1) {
-								val /= n;
-							}
-							fitnessVals.put(ce, val);
-						}
-					}
-
-					System.out.println(" fitnessVal: " + fitnessVals.get(aic) + "," + fitnessVals.get(db)
-					    + "," + fitnessVals.get(dunn) + "," + fitnessVals.get(rand) + ","
-					    + fitnessVals.get(aRand));
+					KMeansConfigResult result = executor.executeAndEvaluate(config, N, clusterEvaluations);
+					double[] average = result.getMean();
+					double[] median = result.getMedian();
+					double[] stDev = result.getStandardDeviation();
+					System.out.println("Average: " + Arrays.toString(average));
+					System.out.println("Median: " + Arrays.toString(median));
+					System.out.println("St Dev: " + Arrays.toString(stDev));
 					String entry = k + " " + distMeasId + " " + iter;
-					for (ClusterEvaluationWithNaturalFitness ce : clusterEvaluations) {
-						double fitnessVal = fitnessVals.get(ce);
+					for (int i = 0; i < clusterEvaluations.length; i++) {
+//						double fitnessVal = average[i];
+						double fitnessVal = median[i];
+						ClusterEvaluationWithNaturalFitness ce = clusterEvaluations[i];
 						double best = bestFitnessValMap.get(ce);
 						if ((ce.isNatural() && fitnessVal > best)
 						    || (!ce.isNatural() && fitnessVal < best)) {

@@ -21,13 +21,14 @@ public class KMeansEvolutionStatsWriter implements
 	FileWriter writer;
 	String sep = ",";
 
-	public KMeansEvolutionStatsWriter(String name) {
-		File file = new File("output/monitoring/simpleGA/" + name + "_evolution_stats_"
+	public KMeansEvolutionStatsWriter(String folder, String name) {
+		File file = new File("output/monitoring/" + folder + "/" + name + "_evolution_stats_"
 		    + System.currentTimeMillis() + ".csv");
+		System.out.println("output at : " + file);
 		try {
 			writer = new FileWriter(file);
 			writer
-			    .write("GEN COUNT, BEST K, BEST DIST MEAS ID, BEST ITER, BEST FITNESS, FITNESS STD DEV, "
+			    .write("GEN COUNT, TIME, BEST K, BEST DIST MEAS ID, BEST ITER, BEST FITNESS, FITNESS STD DEV, "
 			        + "FITNESS MEAN, POP SIZE\n");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -36,7 +37,9 @@ public class KMeansEvolutionStatsWriter implements
 
 	private void printPopulationData(PopulationData<? extends KMeansConfiguration> data)
 	    throws IOException {
+
 		writer.write(data.getGenerationNumber() + sep
+		    + data.getElapsedTime() + sep
 		    + data.getBestCandidate().getK() + sep
 		    + data.getBestCandidate().getDistanceMeasureId() + sep
 		    + data.getBestCandidate().getIterations() + sep
